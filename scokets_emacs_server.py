@@ -1,0 +1,41 @@
+#sockets
+
+import socket
+
+def start_server():
+    host = '127.0.0.1'
+    port = 65432
+#cria um novo objeto socket
+# -> socket.af_inet especifica a familia de endereco pv4
+# -> socket.sock_stream siginifica que estamos usando protocolo tcp
+#offline 
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        #online
+        #liga o socket a um endereco especifico e a uma porta
+        #o blind e usado apenas pelo servidor pois ele cria e define uma
+        #porta e um endereco
+        #uso exclusivo do servidor 
+        s.bind((host, port))
+        #prepara o serrvidor para agusrdar conexoes     
+        s.listen()
+        #online 
+        print(f"Servidor iniciado em {host}:{port}")
+        
+        while True:
+            #online
+            #permite estabelecer uma conexao com o cliente podendo tambem limitar a quantidades de clientes que se gera uma conexao
+            #uso exclusivo do servidor 
+            conn, addr = s.accept()
+            with conn:
+                print(f"Conectado por {addr}")
+                while True:
+                    #recebe dados com o maximo de 1024 bits 
+                    data = conn.recv(1024)
+                    if not data:
+                        break
+                    #continua enviando dados para o cliente ate que todos sejam transmitidos 
+                    conn.sendall(data.upper())
+                    #fecha a conexao 
+                    s.close()
+if __name__ == "__main__":
+    start_server()

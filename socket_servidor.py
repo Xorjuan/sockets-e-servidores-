@@ -11,7 +11,9 @@ server.bind((host, port))  # online
 
 print("aguardando conexão de um cliente ")
 # o comm está esperando a função server aceitar um endereço
-server.listen(1)
+
+server.listen(1)  # o servidor aceita apenas um cliente
+conn, ender = server.accept()
 
 print("conecatdo em ", ender)
 
