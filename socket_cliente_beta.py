@@ -1,18 +1,35 @@
 import socket
 import sys
+import struct
+import os 
 
+BUFFER_SIZE = 64 * 1024  # 64 KB
+HOST = "25.0.111.214"
+PORT = 65432
 
 def send_request(question, *args):
-    host = "25.0.111.214"
-    port = 65432
-
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((host, port))
+        s.connect((HOST, PORT))
         request = f"{question}|{'|'.join(args)}"
         s.sendall(request.encode())
-        response = s.recv(1024).decode()
-    return response
-
+        
+        if question in [6, 7]:  # Expecting file data
+            # Receive the file size
+            file_size_data = s.recv(4)
+            file_size = struct.unpack('>I', file_size_data)[0]
+            
+            received_size = 0
+            with open("received_file.jpg", 'wb') as f:
+                while received_size < file_size:
+                    chunk = s.recv(min(BUFFER_SIZE, file_size - received_size))
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    received_size += len(chunk)
+            return f"Arquivo recebido e salvo como 'received_file.jpg'"
+        else:
+            response = s.recv(1024).decode()
+            return response
 
 def print_utf8_table():
     utf8_table = [
@@ -33,7 +50,6 @@ def print_utf8_table():
             f"| {row['bytes']:15d} | {row['bits']:19d} | {row['first']:16s} | {row['last']:14s} |"
         )
     print()
-
 
 def print_ascii_table():
     ascii_matrix = [
@@ -187,7 +203,6 @@ def print_ascii_table():
         print(f"Row {i}: {' '.join(row)}")
     print()
 
-
 def main_menu():
     while True:
         print("\nEscolha uma questão:")
@@ -196,7 +211,9 @@ def main_menu():
         print("3. Divisão Binária")
         print("4. Conversão para IEEE 754")
         print("5. ASCII para Hexadecimal e UTF-8")
-        print("6. Sair")
+        print("6. Enviar Expressão Lógica")
+        print("7. Gerar e Receber Arquivo de Expressão Lógica")
+        print("8. Sair")
 
         choice = input("Digite o número da questão desejada: ")
 
@@ -245,12 +262,21 @@ def main_menu():
                 print("Opção inválida.")
 
         elif choice == "6":
+            logic_expr = input("Digite a expressão lógica: ")
+            result = send_request(6, logic_expr)
+            print(result)
+
+        elif choice == "7":
+            params = input("Digite os parâmetros separados por espaço: ").split()
+            result = send_request(7, *params)
+            print(result)
+
+        elif choice == "8":
             print("Encerrando o programa...")
             sys.exit(0)
 
         else:
             print("Opção inválida. Por favor, tente novamente.")
-
 
 if __name__ == "__main__":
     main_menu()

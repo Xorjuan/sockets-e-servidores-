@@ -1,6 +1,24 @@
 import socket
 import sys
+import struct
 
+BUFFER_SIZE = 64 * 1024  # 64 KB
+
+def receive_all(sock, file_path):
+    """Recebe todos os dados do socket e salva em um arquivo."""
+    # Receive the file size first
+    file_size_data = sock.recv(4)
+    file_size = struct.unpack('>I', file_size_data)[0]
+    
+    # Open file for writing binary data
+    with open(file_path, 'wb') as f:
+        bytes_received = 0
+        while bytes_received < file_size:
+            chunk = sock.recv(min(BUFFER_SIZE, file_size - bytes_received))
+            if not chunk:
+                break
+            f.write(chunk)
+            bytes_received += len(chunk)
 
 def send_request(question, *args):
     host = "25.0.111.214"
@@ -10,9 +28,14 @@ def send_request(question, *args):
         s.connect((host, port))
         request = f"{question}|{'|'.join(args)}"
         s.sendall(request.encode())
-        response = s.recv(1024).decode()
-    return response
 
+        if question == 6:
+            # Receber o arquivo e salvar localmente
+            receive_all(s, "received_logic_diagram.jpg")
+            return "Diagrama lógico recebido e salvo como received_logic_diagram.jpg"
+        else:
+            response = s.recv(BUFFER_SIZE).decode()
+            return response
 
 def print_utf8_table():
     utf8_table = [
@@ -34,159 +57,37 @@ def print_utf8_table():
         )
     print()
 
-
 def print_ascii_table():
     ascii_matrix = [
         [
-            "NUL",
-            "SOH",
-            "STX",
-            "ETX",
-            "EOT",
-            "ENO",
-            "ACK",
-            "BEL",
-            "BS",
-            "TAB",
-            "LF",
-            "VT",
-            "FF",
-            "CR",
-            "SO",
-            "SI",
+            "NUL", "SOH", "STX", "ETX", "EOT", "ENO", "ACK", "BEL", "BS", "TAB", "LF", "VT", "FF", "CR", "SO", "SI",
         ],
         [
-            "DLE",
-            "DC1",
-            "DC2",
-            "DC3",
-            "DC4",
-            "NAK",
-            "SYN",
-            "ETB",
-            "CAN",
-            "EM",
-            "SUB",
-            "ESC",
-            "FS",
-            "GS",
-            "RS",
-            "US",
+            "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB", "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US",
         ],
         [
-            " ",
-            "!",
-            '"',
-            "#",
-            "$",
-            "%",
-            "&",
-            "'",
-            "(",
-            ")",
-            "*",
-            "+",
-            ",",
-            "-",
-            ".",
-            "/",
+            " ", "!", '"', "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/",
         ],
         [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            ":",
-            ";",
-            "<",
-            "=",
-            ">",
-            "?",
+            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">", "?",
         ],
         [
-            "@",
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
-            "F",
-            "G",
-            "H",
-            "I",
-            "J",
-            "K",
-            "L",
-            "M",
-            "N",
-            "O",
+            "@", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O",
         ],
         [
-            "P",
-            "Q",
-            "R",
-            "S",
-            "T",
-            "U",
-            "V",
-            "W",
-            "X",
-            "Y",
-            "Z",
-            "[",
-            "\\",
-            "]",
-            "^",
-            "_",
+            "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "\\", "]", "^", "_",
         ],
         [
-            "`",
-            "a",
-            "b",
-            "c",
-            "d",
-            "e",
-            "f",
-            "g",
-            "h",
-            "i",
-            "j",
-            "k",
-            "l",
-            "m",
-            "n",
-            "o",
+            "`", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o",
         ],
         [
-            "p",
-            "q",
-            "r",
-            "s",
-            "t",
-            "u",
-            "v",
-            "w",
-            "x",
-            "y",
-            "z",
-            "{",
-            "|",
-            "}",
-            "~",
-            "DEL",
+            "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "~", "DEL",
         ],
     ]
     print("\nTabela ASCII:")
     for i, row in enumerate(ascii_matrix):
         print(f"Row {i}: {' '.join(row)}")
     print()
-
 
 def main_menu():
     while True:
@@ -196,7 +97,8 @@ def main_menu():
         print("3. Divisão Binária")
         print("4. Conversão para IEEE 754")
         print("5. ASCII para Hexadecimal e UTF-8")
-        print("6. Sair")
+        print("6. Gerar Diagrama Lógico")
+        print("7. Sair")
 
         choice = input("Digite o número da questão desejada: ")
 
@@ -234,23 +136,25 @@ def main_menu():
                 print_ascii_table()
                 word = input("Digite uma palavra: ")
                 result = send_request(5, "ascii_to_hex", word)
-                print(f"Valor hexadecimal de '{word}': {result}")
+                print(f"Valor em hexadecimal: {result}")
+
             elif sub_choice == "2":
-                print_utf8_table()
-                phrase1 = input("Digite uma palavra sem acentos: ")
-                phrase2 = input("Digite a mesma palavra com acentos: ")
+                phrase1 = input("Digite a primeira frase: ")
+                phrase2 = input("Digite a segunda frase: ")
                 result = send_request(5, "utf8_compare", phrase1, phrase2)
-                print(result)
-            else:
-                print("Opção inválida.")
+                print(f"Comparação UTF-8:\n{result}")
 
         elif choice == "6":
-            print("Encerrando o programa...")
-            sys.exit(0)
+            logic_expr = input("Digite a expressão lógica: ")
+            result = send_request(6, logic_expr)
+            print(result)
+
+        elif choice == "7":
+            print("Saindo...")
+            break
 
         else:
-            print("Opção inválida. Por favor, tente novamente.")
-
+            print("Opção inválida. Tente novamente.")
 
 if __name__ == "__main__":
     main_menu()

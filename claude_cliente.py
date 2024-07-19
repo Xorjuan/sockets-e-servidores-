@@ -3,7 +3,7 @@ import sys
 
 
 def send_request(question, *args):
-    host = "25.0.111.214"
+    host = "25.0.111.214"  # Endereço local para teste
     port = 65432
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -245,6 +245,11 @@ def main_menu():
                 print("Opção inválida.")
 
         elif choice == "6":
+            logic_expr = input("Digite a expressão lógica: ")
+            result = send_request(6, logic_expr)
+            print(result)
+
+        elif choice == "7":
             print("Encerrando o programa...")
             sys.exit(0)
 

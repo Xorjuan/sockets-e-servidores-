@@ -1,0 +1,25 @@
+import socket
+
+
+HOST = "192.168.15.14"  # endereço do servidor
+PORT = 12345  # porta do servidor
+
+
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#cria o socket mas está offline 
+
+client_socket.connect((HOST, PORT))
+#gera trafego pois se conecta ao servidor sockets 
+
+message = "Olá, servidor!"
+client_socket.sendall(message.encode("utf-8"))
+# envia dados para o servidor logo temos dados 
+
+
+data = client_socket.recv(1024).decode("utf-8")
+print(f"Resposta do servidor: {data}")
+#recebe dados do servidor logo gera trafego 
+
+
+client_socket.close()
+#termina a conexão logo temos trafegos mas ele encerra esse trafego de dados 
